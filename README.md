@@ -1,12 +1,15 @@
 # Intro-card
 
-A one-page intro card that types out a short message, then reveals social links
-below it. Built to match the look of [lydiashan.com](https://lydiashan.com):
-Geist, near-black ink on white, and the `#001dd9` blue used for the caret and
-link hovers.
+A one-page intro card. The logo spins in the middle of the page while things
+load, glides up to sit above the message, and then a short note types itself out
+before the social links fade in.
 
-No build step, no dependencies. The whole page is a single `index.html` — one
-request for the markup and one for the webfont.
+Built to match [lydiashan.com](https://lydiashan.com): `logo.svg` is the site's
+own mark, Geist sets the type, and the site's `#001dd9` blue carries the logo,
+the typing caret and the link hovers.
+
+No build step and no dependencies. The page is a single `index.html`, so it's
+one request for the markup, one for the logo, and one for the webfont.
 
 ## Running it locally
 
@@ -29,10 +32,9 @@ Everything lives in `index.html`.
   copy is what screen readers announce, so they get the full sentence instead of
   it arriving one letter at a time.
 - **The links** are the three anchors in `nav.socials`.
-- **The typing feel** is the group of constants at the top of the script:
-  `CHAR_MS` sets the base pace, `JITTER_MS` adds a little randomness so it
-  doesn't feel mechanical, and `COMMA_MS` / `PERIOD_MS` add breaths at
-  punctuation.
+- **The pacing** is the block of constants at the top of the script, grouped
+  under `Pacing`. `LOAD_MS`, `MOVE_MS` and `SETTLE_MS` time the logo's intro;
+  `BASE_MS` sets the typing speed and the rest shape its rhythm.
 
 ### One thing to double-check
 
@@ -42,21 +44,58 @@ swap it if it's wrong. The other links came from the live site: X
 [`@lydia_shann`](https://x.com/lydia_shann) and
 [Are.na](https://www.are.na/lydia-shan).
 
+## How the pieces work
+
+### The logo intro
+
+The logo starts centred in the viewport, spinning as a loading indicator, then
+travels up to its resting place above the message and stops. The rotation reuses
+the site's own values: a 0.75s sweep on `cubic-bezier(.12, .8, .2, 1)`, held
+briefly before repeating.
+
+Two nested elements are needed because an element can only carry one
+`transform`: `.logo-slot` owns the position and `.logo` inside it owns the
+rotation. `centreLogo()` clears its own offset before measuring, since
+`getBoundingClientRect()` reports the transformed box and would otherwise
+cancel the offset back to zero.
+
+### The typing rhythm
+
+The pace is re-rolled at every word boundary between `WORD_SPEED_MIN` and
+`WORD_SPEED_MAX`, so some words arrive in a burst and others drag — that word to
+word drift is the main source of variation, rather than per-character jitter
+alone. On top of it: pauses at punctuation, a longer beat before a shifted
+character, and an occasional hesitation. It lands around 10s for the full
+message, with gaps between characters ranging from roughly 40ms to 570ms.
+
+### The typing sound
+
+Each keystroke is synthesised rather than sampled, so there's no audio file to
+download: a short noise burst through a bandpass filter with a fast decay,
+randomised in pitch and level per keystroke. The spacebar is pitched lower and
+softer than the other keys.
+
+The gain values look high for something described as subtle because the bandpass
+sheds most of the burst's energy — the peak that actually reaches the output is
+roughly a quarter of the figure set in the code.
+
+Browsers won't let a page play audio before the visitor interacts with it, so
+sound starts off. The corner toggle turns it on and replays the message from the
+top so it's actually heard, and turns it back off again.
+
 ## Behaviour
 
-- **Responsive.** Type scales with the viewport via `clamp()`, and the column is
-  capped at `22ch` so the line breaks stay close to the original design. That
-  cap is why the type size is set on `.card` rather than on `.message` — `ch`
-  resolves against the element's own font size, so putting it on the smaller
-  parent would make the column far too narrow. `100dvh` plus safe-area insets
-  keep the card centred on mobile without fighting browser chrome. It settles at
-  4–5 lines from a 375px phone up to desktop, with no horizontal overflow.
+- **Centred at any size.** The message is a flat 12px with the column capped at
+  `27ch`, and the block stays vertically and horizontally centred from a 375px
+  phone up to desktop with no horizontal overflow.
+- **Stable while typing.** The hidden ghost copy holds the text block at its
+  final height, so the links below never shift as lines are added.
 - **Skippable.** Tap, click, or press Enter / Space / Esc / Tab to jump to the
   full message.
 - **Respects `prefers-reduced-motion`.** The message and links render
-  immediately with no typing or fades.
-- **Works without JavaScript.** The message and links are in the HTML and show
-  as a static card.
+  immediately, with no intro, typing or fades.
+- **Works without JavaScript.** The logo sits in its resting position and the
+  message and links show as a static card.
 
 ## Deploying to GitHub Pages
 
