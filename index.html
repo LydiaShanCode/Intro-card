@@ -7,7 +7,7 @@
 <title>Hey, Lydia here.</title>
 <meta name="description" content="A small note from Lydia Shan — product designer." />
 <meta name="theme-color" content="#ffffff" />
-<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="icon" type="image/svg+xml" href="logo.svg" />
 
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Hey, Lydia here." />
@@ -28,8 +28,10 @@
     --ink: #1c1c1c;
     --subdued: #6f6f6f;
     --light: #a0a0a0;
+    --faint: #d8d8d8;
     --primary: #001dd9;
     --ease-smooth: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --ease-dramatic: cubic-bezier(0.12, 0.8, 0.2, 1);
   }
 
   *, *::before, *::after { box-sizing: border-box; }
@@ -49,26 +51,43 @@
     background: var(--bg);
     color: var(--ink);
     font-family: Geist, system-ui, -apple-system, sans-serif;
+    font-size: 12px;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
   .card {
     width: 100%;
-    /* The message's type size is set here so the `ch` cap below resolves
-       against it, holding the line breaks close to the original design. */
-    font-size: clamp(1.375rem, 5.6vw, 1.75rem);
-    max-width: 22ch;
+    max-width: 27ch;
   }
 
-  .js .card { animation: fade-in 0.8s var(--ease-smooth) both; }
+  /* The logo sits above the message and shares its left edge. The slot owns
+     position so the logo inside is free to own rotation. */
+  .logo-slot {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 1.5rem;
+  }
+
+  .js .logo-slot { will-change: transform; }
+
+  .logo-slot.is-settling { transition: transform 720ms var(--ease-dramatic); }
+
+  .logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Rotation matches the 0.75s sweep the nav logo uses on lydiashan.com,
+     then holds briefly before going again while the page loads. */
+  .logo.is-loading { animation: logo-spin 1.25s var(--ease-dramatic) infinite; }
 
   .message {
     position: relative;
     margin: 0;
-    font-size: 1em;
-    line-height: 1.4;
-    letter-spacing: -0.017em;
+    font-size: 12px;
+    line-height: 1.7;
   }
 
   /* The ghost copy holds the block at its final height so nothing shifts
@@ -85,10 +104,10 @@
 
   .caret {
     display: inline-block;
-    width: 2px;
+    width: 1.5px;
     height: 1.05em;
-    vertical-align: -0.14em;
-    margin-left: 0.07em;
+    vertical-align: -0.16em;
+    margin-left: 0.09em;
     background: var(--primary);
     animation: blink 1.1s steps(1, end) infinite;
   }
@@ -97,18 +116,17 @@
   .is-typing .caret { animation: none; }
 
   .socials {
-    margin-top: clamp(2.5rem, 11vh, 5rem);
+    margin-top: clamp(2rem, 6vh, 3rem);
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.1em;
-    font-size: clamp(1rem, 3.9vw, 1.125rem);
-    letter-spacing: -0.008em;
+    gap: 0.15em;
+    font-size: 12px;
   }
 
   .js .socials {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
     pointer-events: none;
     transition: opacity 0.7s var(--ease-smooth), transform 0.7s var(--ease-smooth);
   }
@@ -122,8 +140,7 @@
   .socials a {
     color: var(--subdued);
     text-decoration: none;
-    padding: 0.15em 0;
-    border-radius: 4px;
+    padding: 0.45em 0;
     transition: color 0.25s var(--ease-smooth);
   }
 
@@ -131,28 +148,29 @@
   .socials a:focus-visible { color: var(--primary); }
 
   .socials a:focus-visible {
-    outline: 2px solid var(--primary);
+    outline: 1.5px solid var(--primary);
     outline-offset: 3px;
+    border-radius: 2px;
   }
 
   .socials .sep {
-    color: var(--light);
+    color: var(--faint);
     -webkit-user-select: none;
     user-select: none;
   }
 
   .signature {
-    margin: 1.75rem 0 0;
+    margin: 0.85rem 0 0;
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 0.6875rem;
-    letter-spacing: 0.09em;
+    font-size: 10px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
   .js .signature {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.7s var(--ease-smooth) 0.25s;
+    transition: opacity 0.7s var(--ease-smooth) 0.2s;
   }
 
   .js .signature.is-revealed {
@@ -169,6 +187,47 @@
   .signature a:hover,
   .signature a:focus-visible { color: var(--primary); }
 
+  /* Typing sound is off until it can legally start, so the toggle doubles as
+     the affordance that turns it on and replays the message. */
+  .sound-toggle {
+    position: fixed;
+    top: max(1.25rem, env(safe-area-inset-top));
+    right: max(1.25rem, env(safe-area-inset-right));
+    display: none;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.5em 0.15em;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--light);
+    transition: color 0.25s var(--ease-smooth);
+  }
+
+  .js .sound-toggle { display: flex; }
+
+  .sound-toggle:hover { color: var(--subdued); }
+
+  .sound-toggle:focus-visible {
+    outline: 1.5px solid var(--primary);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .sound-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--faint);
+    transition: background-color 0.25s var(--ease-smooth);
+  }
+
+  .sound-toggle[aria-pressed="true"] .sound-dot { background: var(--primary); }
+
   .sr-only {
     position: absolute;
     width: 1px;
@@ -181,25 +240,30 @@
     border: 0;
   }
 
+  @keyframes logo-spin {
+    0% { transform: rotate(0deg); }
+    60%, 100% { transform: rotate(360deg); }
+  }
+
   @keyframes blink {
     0%, 50% { opacity: 1; }
     50.01%, 100% { opacity: 0; }
   }
 
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: none; }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .js .card { animation: none; }
     .caret { animation: none; }
+    .logo.is-loading { animation: none; }
+    .logo-slot.is-settling { transition: none; }
     .js .socials, .js .signature { transition: none; }
   }
 </style>
 </head>
 <body>
   <main class="card">
+    <div class="logo-slot" id="logo-slot">
+      <img class="logo" id="logo" src="logo.svg" width="20" height="20" alt="Lydia Shan" />
+    </div>
+
     <p class="message" aria-hidden="true"><span class="ghost" id="ghost">Hey, Lydia here. If you’re reading this message it means I think highly of you, and would like to get to know you.</span><span class="live"><span id="typed"></span><span class="caret"></span></span></p>
 
     <p class="sr-only">Hey, Lydia here. If you’re reading this message it means I think highly of you, and would like to get to know you.</p>
@@ -217,57 +281,148 @@
     </p>
   </main>
 
+  <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="false" title="Typing sound">
+    <span class="sound-dot" aria-hidden="true"></span>
+    <span>sound</span>
+  </button>
+
 <script>
 (function () {
-  var CHAR_MS = 34;      // base gap between characters
-  var JITTER_MS = 26;    // random extra, keeps the rhythm from feeling mechanical
-  var COMMA_MS = 190;    // breath after , ; :
-  var PERIOD_MS = 460;   // longer breath after . ! ?
-  var START_MS = 600;    // beat before the first character
-  var REVEAL_MS = 420;   // beat before the links arrive
+  // --- Pacing -------------------------------------------------------------
+  var LOAD_MS = 900;      // logo spins in the middle of the page
+  var MOVE_MS = 720;      // logo glides up to sit above the message
+  var SETTLE_MS = 260;    // beat after it lands, before typing starts
+  var REVEAL_MS = 520;    // beat after the last character, before the links
 
-  var text = document.getElementById("ghost").textContent;
+  var BASE_MS = 52;       // baseline gap between characters
+  var SPREAD_MS = 38;     // per-character wobble
+  var WORD_MS = 40;       // extra breath at a word boundary
+  var COMMA_MS = 260;     // pause after , ; :
+  var PERIOD_MS = 540;    // pause after . ! ?
+  var SHIFT_FACTOR = 1.3; // reaching for shift costs a beat
+  var HESITATE_ODDS = 0.05;
+  var HESITATE_MIN = 170;
+  var HESITATE_MAX = 480;
+  var WORD_SPEED_MIN = 0.6;   // some words arrive in a burst,
+  var WORD_SPEED_MAX = 1.55;  // others drag — this is the main source of variation
+
+  var ghost = document.getElementById("ghost");
   var typed = document.getElementById("typed");
-  var message = typed.parentNode.parentNode;
+  var message = document.querySelector(".message");
   var socials = document.getElementById("socials");
   var signature = document.getElementById("signature");
+  var logoSlot = document.getElementById("logo-slot");
+  var logo = document.getElementById("logo");
+  var toggle = document.getElementById("sound-toggle");
+
+  var text = ghost.textContent;
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var timer = null;
   var index = 0;
   var settled = false;
+  var typing = false;
+  var loaded = false;
+  var wordSpeed = 1;
+
+  // --- Typing sound -------------------------------------------------------
+  // Synthesised rather than sampled: a filtered noise burst per keystroke, so
+  // there's no audio file to download.
+  var ctx = null;
+  var noise = [];
+  var soundOn = false;
+
+  function buildAudio() {
+    if (ctx) return ctx;
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    ctx = new Ctx();
+
+    for (var n = 0; n < 8; n++) {
+      var length = Math.ceil(ctx.sampleRate * 0.04);
+      var buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+      var samples = buffer.getChannelData(0);
+      for (var i = 0; i < length; i++) {
+        samples[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
+      }
+      noise.push(buffer);
+    }
+    return ctx;
+  }
+
+  function audible() {
+    return soundOn && ctx && ctx.state === "running";
+  }
+
+  function keySound(char) {
+    if (!audible()) return;
+
+    var isSpace = char === " ";
+    var source = ctx.createBufferSource();
+    source.buffer = noise[(Math.random() * noise.length) | 0];
+
+    var band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    // The spacebar reads lower and softer than the other keys.
+    band.frequency.value = isSpace ? 780 + Math.random() * 160 : 1450 + Math.random() * 950;
+    band.Q.value = 0.8;
+
+    var gain = ctx.createGain();
+    // These look high for a "subtle" click, but the bandpass sheds most of the
+    // noise burst's energy — the peak that actually reaches the output is
+    // roughly a quarter of the figure set here.
+    var peak = isSpace ? 0.28 : 0.15 + Math.random() * 0.1;
+    var now = ctx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(peak, now + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isSpace ? 0.055 : 0.032));
+
+    source.connect(band);
+    band.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(now);
+    source.stop(now + 0.07);
+  }
+
+  function paintToggle() {
+    toggle.setAttribute("aria-pressed", audible() ? "true" : "false");
+  }
+
+  // --- Typing -------------------------------------------------------------
+  function isUpper(char) {
+    return char !== char.toLowerCase() && char === char.toUpperCase();
+  }
+
+  function delayAfter(char, next) {
+    if (char === "." || char === "!" || char === "?") return PERIOD_MS + Math.random() * 220;
+    if (char === "," || char === ";" || char === ":") return COMMA_MS + Math.random() * 150;
+
+    if (char === " ") {
+      // Re-roll the tempo at each word so the pace keeps drifting.
+      wordSpeed = WORD_SPEED_MIN + Math.random() * (WORD_SPEED_MAX - WORD_SPEED_MIN);
+      var pause = BASE_MS * wordSpeed + Math.random() * WORD_MS;
+      if (Math.random() < HESITATE_ODDS) {
+        pause += HESITATE_MIN + Math.random() * (HESITATE_MAX - HESITATE_MIN);
+      }
+      return pause;
+    }
+
+    var delay = BASE_MS * wordSpeed + Math.random() * SPREAD_MS;
+    if (next && (isUpper(next) || next === "’")) delay *= SHIFT_FACTOR;
+    return delay;
+  }
 
   function reveal() {
     socials.classList.add("is-revealed");
     signature.classList.add("is-revealed");
   }
 
-  function stopListening() {
-    window.removeEventListener("pointerdown", skip);
-    window.removeEventListener("keydown", onKey);
-  }
-
   function settle() {
     settled = true;
+    typing = false;
     clearTimeout(timer);
-    stopListening();
     message.classList.remove("is-typing");
     reveal();
-  }
-
-  function skip() {
-    if (settled) return;
-    typed.textContent = text;
-    settle();
-  }
-
-  function onKey(event) {
-    if (event.key === "Escape" || event.key === "Enter" || event.key === " " || event.key === "Tab") skip();
-  }
-
-  function delayAfter(char) {
-    if (char === "." || char === "!" || char === "?") return PERIOD_MS;
-    if (char === "," || char === ";" || char === ":") return COMMA_MS;
-    return CHAR_MS + Math.random() * JITTER_MS;
   }
 
   function step() {
@@ -282,21 +437,108 @@
     var char = text.charAt(index);
     typed.textContent += char;
     index += 1;
-    timer = setTimeout(step, delayAfter(char));
+    keySound(char);
+    timer = setTimeout(step, delayAfter(char, text.charAt(index)));
   }
 
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  function startTyping() {
+    settled = false;
+    typing = true;
+    index = 0;
+    wordSpeed = 1;
+    typed.textContent = "";
+    socials.classList.remove("is-revealed");
+    signature.classList.remove("is-revealed");
+    message.classList.add("is-typing");
+    clearTimeout(timer);
+    timer = setTimeout(step, 0);
+  }
+
+  function skip() {
+    if (settled || !typing) return;
+    typed.textContent = text;
+    settle();
+  }
+
+  // --- Logo loading sequence ---------------------------------------------
+  // The logo starts in the middle of the page, spins the way it does on
+  // lydiashan.com, then travels up to its resting place above the message.
+  function centreLogo() {
+    // Clear the offset first, otherwise the measurement below includes the
+    // offset already applied and the logo would cancel itself back to rest.
+    logoSlot.style.transform = "none";
+    var box = logoSlot.getBoundingClientRect();
+    var dx = window.innerWidth / 2 - (box.left + box.width / 2);
+    var dy = window.innerHeight / 2 - (box.top + box.height / 2);
+    logoSlot.style.transform = "translate(" + Math.round(dx) + "px, " + Math.round(dy) + "px)";
+  }
+
+  function land() {
+    logoSlot.classList.add("is-settling");
+    logoSlot.style.transform = "translate(0px, 0px)";
+    window.removeEventListener("resize", centreLogo);
+
+    setTimeout(function () {
+      logo.classList.remove("is-loading");
+      logoSlot.style.willChange = "auto";
+      loaded = true;
+      startTyping();
+    }, MOVE_MS + SETTLE_MS);
+  }
+
+  // --- Wiring -------------------------------------------------------------
+  toggle.addEventListener("click", function (event) {
+    event.stopPropagation();
+
+    if (audible()) {
+      soundOn = false;
+      paintToggle();
+      return;
+    }
+
+    soundOn = true;
+    buildAudio();
+    var resumed = ctx && ctx.state === "suspended" ? ctx.resume() : Promise.resolve();
+
+    Promise.resolve(resumed).then(function () {
+      paintToggle();
+      // Replay from the top so the sound is actually heard, but never
+      // interrupt the intro sequence already in flight.
+      if (audible() && loaded) startTyping();
+    })["catch"](paintToggle);
+  });
+
+  document.addEventListener("pointerdown", function (event) {
+    var target = event.target;
+    if (target && target.closest && target.closest(".sound-toggle, a")) return;
+    skip();
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.target === toggle) return;
+    if (event.key === "Escape" || event.key === "Enter" || event.key === " " || event.key === "Tab") skip();
+  });
+
+  if (reduceMotion) {
+    loaded = true;
     typed.textContent = text;
     reveal();
     return;
   }
 
-  // Let people jump straight to the message if they'd rather just read it.
-  window.addEventListener("pointerdown", skip);
-  window.addEventListener("keydown", onKey);
+  centreLogo();
+  window.addEventListener("resize", centreLogo);
 
-  message.classList.add("is-typing");
-  timer = setTimeout(step, START_MS);
+  // Geist landing late changes the message height, which moves the logo's
+  // resting spot and so its offset from centre.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      if (!loaded) centreLogo();
+    });
+  }
+
+  logo.classList.add("is-loading");
+  setTimeout(land, LOAD_MS);
 })();
 </script>
 </body>
