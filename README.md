@@ -44,10 +44,13 @@ swap it if it's wrong. The other links came from the live site: X
 
 ## Behaviour
 
-- **Responsive.** Type scales with the viewport via `clamp()`, the column is
-  capped at `30ch` so the line breaks stay close to the original design, and
-  `100dvh` plus safe-area insets keep it centred on mobile without fighting
-  browser chrome.
+- **Responsive.** Type scales with the viewport via `clamp()`, and the column is
+  capped at `22ch` so the line breaks stay close to the original design. That
+  cap is why the type size is set on `.card` rather than on `.message` — `ch`
+  resolves against the element's own font size, so putting it on the smaller
+  parent would make the column far too narrow. `100dvh` plus safe-area insets
+  keep the card centred on mobile without fighting browser chrome. It settles at
+  4–5 lines from a 375px phone up to desktop, with no horizontal overflow.
 - **Skippable.** Tap, click, or press Enter / Space / Esc / Tab to jump to the
   full message.
 - **Respects `prefers-reduced-motion`.** The message and links render
