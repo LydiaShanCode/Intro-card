@@ -112,6 +112,12 @@
     animation: blink 1.1s steps(1, end) infinite;
   }
 
+  /* Kept out of sight until typing begins, so the logo has the page to itself
+     while it loads. */
+  .js .caret { visibility: hidden; }
+
+  .js .message.has-caret .caret { visibility: visible; }
+
   /* Hold the caret solid while characters land, blink only once idle. */
   .is-typing .caret { animation: none; }
 
@@ -449,6 +455,7 @@
     typed.textContent = "";
     socials.classList.remove("is-revealed");
     signature.classList.remove("is-revealed");
+    message.classList.add("has-caret");
     message.classList.add("is-typing");
     clearTimeout(timer);
     timer = setTimeout(step, 0);
@@ -522,6 +529,7 @@
   if (reduceMotion) {
     loaded = true;
     typed.textContent = text;
+    message.classList.add("has-caret");
     reveal();
     return;
   }
