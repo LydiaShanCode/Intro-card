@@ -79,9 +79,13 @@
     height: 100%;
   }
 
-  /* Rotation matches the 0.75s sweep the nav logo uses on lydiashan.com,
-     then holds briefly before going again while the page loads. */
+  /* Loading, centred on the page: matches the 0.75s sweep the nav logo uses on
+     lydiashan.com, then holds briefly before going again. */
   .logo.is-loading { animation: logo-spin 1.25s var(--ease-dramatic) infinite; }
+
+  /* Writing, at rest above the text: a slower, even turn pitched to the pace of
+     the typing. It runs for as long as the message is being written. */
+  .logo.is-writing { animation: logo-turn 4s linear infinite; }
 
   .message {
     position: relative;
@@ -248,6 +252,11 @@
     60%, 100% { transform: rotate(360deg); }
   }
 
+  @keyframes logo-turn {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
   @keyframes blink {
     0%, 50% { opacity: 1; }
     50.01%, 100% { opacity: 0; }
@@ -255,7 +264,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .caret { animation: none; }
-    .logo.is-loading { animation: none; }
+    .logo.is-loading, .logo.is-writing { animation: none; }
     .logo-slot.is-settling { transition: none; }
     .js .socials, .js .signature { transition: none; }
   }
@@ -296,6 +305,9 @@
   var MOVE_MS = 720;      // logo glides up to sit above the message
   var SETTLE_MS = 260;    // beat after it lands, before typing starts
   var REVEAL_MS = 520;    // beat after the last character, before the links
+  var TURN_MS = 4000;     // one slow revolution while the message is typing
+  var STOP_MS = 520;      // easing onto a resting angle once typing ends
+  var SYMMETRY = 90;      // the mark reads identically every quarter turn
 
   var BASE_MS = 52;       // baseline gap between characters
   var SPREAD_MS = 38;     // per-character wobble
@@ -420,11 +432,50 @@
     signature.classList.add("is-revealed");
   }
 
+  // --- Logo rotation ------------------------------------------------------
+  function currentAngle() {
+    var matrix = getComputedStyle(logo).transform.match(/matrix\(([^)]+)\)/);
+    if (!matrix) return 0;
+    var parts = matrix[1].split(",");
+    var deg = (Math.atan2(parseFloat(parts[1]), parseFloat(parts[0])) * 180) / Math.PI;
+    return (deg + 360) % 360;
+  }
+
+  // Hand the loading spin over to the slower writing turn without the logo
+  // snapping back to zero: a negative delay starts the new animation at
+  // whatever angle the old one had reached.
+  function spinWhileWriting() {
+    var angle = currentAngle();
+    logo.style.transition = "";
+    logo.style.transform = "";
+    logo.classList.remove("is-loading");
+    logo.style.animationDelay = "-" + (angle / 360) * TURN_MS + "ms";
+    logo.classList.add("is-writing");
+  }
+
+  // Ease onto the nearest quarter turn rather than stopping mid-angle, which
+  // would leave the mark visibly tilted.
+  function stopSpinning() {
+    if (!logo.classList.contains("is-writing")) return;
+
+    var from = currentAngle();
+    var to = Math.ceil(from / SYMMETRY + 0.001) * SYMMETRY;
+
+    logo.classList.remove("is-writing");
+    logo.style.animationDelay = "";
+    logo.style.transition = "none";
+    logo.style.transform = "rotate(" + from + "deg)";
+    void logo.offsetWidth;
+    logo.style.transition = "transform " + STOP_MS + "ms var(--ease-dramatic)";
+    logo.style.transform = "rotate(" + to + "deg)";
+  }
+
   function settle() {
     settled = true;
     typing = false;
     clearTimeout(timer);
     message.classList.remove("is-typing");
+    stopSpinning();
     reveal();
   }
 
@@ -433,6 +484,9 @@
 
     if (index >= text.length) {
       message.classList.remove("is-typing");
+      // Stop on the last character rather than waiting for the links, so the
+      // turn ends exactly when the writing does.
+      stopSpinning();
       timer = setTimeout(settle, REVEAL_MS);
       return;
     }
@@ -454,6 +508,7 @@
     signature.classList.remove("is-revealed");
     message.classList.add("has-caret");
     message.classList.add("is-typing");
+    spinWhileWriting();
     clearTimeout(timer);
     timer = setTimeout(step, 0);
   }
@@ -483,7 +538,8 @@
     window.removeEventListener("resize", centreLogo);
 
     setTimeout(function () {
-      logo.classList.remove("is-loading");
+      // is-loading is dropped inside startTyping, which needs the spin still
+      // running so it can pick the writing turn up at the same angle.
       logoSlot.style.willChange = "auto";
       loaded = true;
       startTyping();

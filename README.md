@@ -49,9 +49,20 @@ swap it if it's wrong. The other links came from the live site: X
 ### The logo intro
 
 The logo starts centred in the viewport, spinning as a loading indicator, then
-travels up to its resting place above the message and stops. The rotation reuses
-the site's own values: a 0.75s sweep on `cubic-bezier(.12, .8, .2, 1)`, held
-briefly before repeating.
+travels up to its resting place above the message.
+
+There are two rotation styles, one for each phase. While loading, it reuses the
+site's own values: a 0.75s sweep on `cubic-bezier(.12, .8, .2, 1)`, held briefly
+before repeating. Once it settles above the text it switches to `logo-turn`, a
+slower even revolution every 4s that runs for exactly as long as the message is
+typing and stops on the last character.
+
+Neither switch is allowed to jump. Handing over to the slow turn would restart
+it at 0°, so `spinWhileWriting()` reads the angle the loading spin reached and
+sets a matching negative `animation-delay` to pick it up there. Stopping would
+snap back the same way, so `stopSpinning()` freezes the current angle and eases
+forward onto the next quarter turn — the mark has four-fold symmetry, so any
+multiple of 90° is indistinguishable from upright.
 
 Two nested elements are needed because an element can only carry one
 `transform`: `.logo-slot` owns the position and `.logo` inside it owns the
