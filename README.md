@@ -36,11 +36,11 @@ Everything lives in `index.html`.
   under `Pacing`. `LOAD_MS`, `MOVE_MS` and `SETTLE_MS` time the logo's intro;
   `BASE_MS` sets the typing speed and the rest shape its rhythm.
 
-### One thing to double-check
+### Social links
 
-The Instagram link points at `instagram.com/lydia_shann`, matching the X handle.
-Instagram isn't linked anywhere on lydiashan.com, so that handle is a guess —
-swap it if it's wrong. The other links came from the live site: X
+The Instagram link points at
+[`https://www.instagram.com/lydiash.an`](https://www.instagram.com/lydiash.an).
+The other links came from the live site: X
 [`@lydia_shann`](https://x.com/lydia_shann) and
 [Are.na](https://www.are.na/lydia-shan).
 
